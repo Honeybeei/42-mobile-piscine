@@ -21,7 +21,11 @@ class ButtonSet {
 
   void _onNumericPressed(String value) {
     if (expressionController.text == '0') {
-      expressionController.text = value;
+      if (value == '00') {
+        expressionController.text = '0';
+      } else {
+        expressionController.text = value;
+      }
     } else {
       expressionController.text += value;
     }
@@ -50,14 +54,15 @@ class ButtonSet {
       resultController.text = calculationLogic(expressionController.text);
     } catch (e) {
       final String message = e.toString().substring(10);
-      // resultController.text = message;
+      resultController.text = "Error";
       final errorSnackBar = SnackBar(
         content: Text(
           message,
-          style:
-              TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onErrorContainer,
+              fontWeight: FontWeight.bold),
         ),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 4),
         backgroundColor:
             Theme.of(context).colorScheme.errorContainer.withOpacity(
                   0.8,

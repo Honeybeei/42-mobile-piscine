@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'package:ex03/error_handling.dart';
 
 String calculationLogic(String expression) {
@@ -10,8 +8,20 @@ String calculationLogic(String expression) {
   final List<String> tokens = _tokenize(expression);
   _checkTokens(tokens);
   _handlePlusMinusOperator(tokens);
+  _printTokens(tokens);
   final double result = _calculate(tokens);
-  return result.toString();
+
+  // Handle potential overflow for integer results
+  if (result.isFinite && result % 1 == 0) {
+    try {
+      return result.toInt().toString();
+    } catch (e) {
+      // If integer overflow occurs, return as double
+      return result.toString();
+    }
+  } else {
+    return result.toString();
+  }
 }
 
 void _checkExpression(String expression) {
@@ -40,8 +50,12 @@ void _checkExpression(String expression) {
 void _checkTokens(List<String> tokens) {
   for (int i = 0; i < tokens.length; i++) {
     if (!_isOperator(tokens[i])) {
-      // check if there is more than two dots in a number
       if (tokens[i].contains(".")) {
+        // check if the number ends with a dot
+        if (tokens[i].endsWith(".")) {
+          throw ErrorHandling.invalidNumber(tokens[i]);
+        }
+        // check if there is more than two dots in a number
         final List<String> splitToken = tokens[i].split(".");
         if (splitToken.length > 2) {
           throw ErrorHandling.moreThanTwoDotsInANumber(tokens[i]);
@@ -113,25 +127,81 @@ void _handlePlusMinusOperator(List<String> tokens) {
   }
 }
 
+bool _isOverflowed(double result) {
+  const double expectedMin = -2147483648; // 2^31
+  const double expectedMax = 2147483647; // 2^31 - 1
+  if (result.isInfinite ||
+      result.isNaN ||
+      result < expectedMin ||
+      result > expectedMax) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 double _calculate(List<String> tokens) {
   final List<double> numbers = [];
+  // calculate multiplication and division first
   for (int i = 0; i < tokens.length; i++) {
-    if (!_isOperator(tokens[i])) {
-      numbers.add(double.parse(tokens[i]));
+    String previousToken;
+    String currentToken;
+    String nextToken;
+    // set tokens
+    if (i > 0) {
+      previousToken = tokens[i - 1];
     } else {
-      if (tokens[i] == "×") {
-        numbers[numbers.length - 2] *= numbers[numbers.length - 1];
-      } else if (tokens[i] == "÷") {
-        if (numbers[numbers.length - 1] == 0) {
-          throw ErrorHandling.divisionByZero();
-        }
-        numbers[numbers.length - 2] /= numbers[numbers.length - 1];
+      previousToken = "";
+    }
+    currentToken = tokens[i];
+    if (i < tokens.length - 1) {
+      nextToken = tokens[i + 1];
+    } else {
+      nextToken = "";
+    }
+    if (currentToken == "×") {
+      final double n1 = numbers.removeLast();
+      final double n2 = double.parse(tokens[i + 1]);
+      i++;
+      final double result = n1 * n2;
+      // check for overflow
+      if (_isOverflowed(result)) {
+        throw ErrorHandling.invalidCalculation(
+            extraMessage: "× $nextToken caused overflow");
       }
+      numbers.add(result);
+    } else if (tokens[i] == "÷") {
+      final double n1 = numbers.removeLast();
+      final double n2 = double.parse(tokens[i + 1]);
+      i++;
+      if (n2 == 0) {
+        throw ErrorHandling.invalidCalculation(
+            extraMessage: "division by zero: $previousToken ÷ $nextToken");
+      }
+      final double result = n1 / n2;
+      // check for overflow
+      if (_isOverflowed(result)) {
+        throw ErrorHandling.invalidCalculation(
+            extraMessage: "÷ $nextToken caused overflow");
+      }
+      numbers.add(result);
+    } else {
+      final double result = double.parse(tokens[i]);
+      if (_isOverflowed(result)) {
+        throw ErrorHandling.invalidCalculation(
+            extraMessage: "number $currentToken caused overflow");
+      }
+      numbers.add(result);
     }
   }
-  double result = numbers[0];
-  for (int i = 1; i < numbers.length; i++) {
+  // add all
+  double result = 0;
+  for (int i = 0; i < numbers.length; i++) {
     result += numbers[i];
+    if (_isOverflowed(result)) {
+      throw ErrorHandling.invalidCalculation(
+          extraMessage: "sum caused overflow");
+    }
   }
   return result;
 }
