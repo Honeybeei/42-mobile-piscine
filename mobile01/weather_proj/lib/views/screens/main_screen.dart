@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:weather_proj/views/widgets/main_app_bar.dart';
 
 class MainScreen extends StatefulWidget {
   final String title;
@@ -16,9 +17,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
+      appBar: AppBar(actionsIconTheme: ,),
       body: Center(
         child: Text(widget.title),
       ),
