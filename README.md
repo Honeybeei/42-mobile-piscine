@@ -48,6 +48,21 @@ I will going to use **Flutter** for this project. However, I also want to learn 
 
 ## [Module 01: Structure and logic](./subjects/42_mobile_piscine_01.pdf)
 
+### Exercise 00: BottomBar
+
+- Create a new project called weather_proj
+- Implement an AppBar with a search TextField and geolocation button
+- Create a BottomBar with 3 tabs: "Currently", "Today", and "Weekly"
+- Enable tab switching via clicking or swiping
+- Display appropriate content for each tab (placeholder text for now)
+- Ensure the app is responsive
+
+### Exercise 01: TopBar
+
+- Implement functionality for the search TextField and geolocation button
+- Display entered text or "Geolocation" in all tabs based on user action
+- Ensure proper interaction between the TopBar and tab content
+
 ---
 
 ## [Module 02: API and data management](./subjects/42_mobile_piscine_02.pdf)
