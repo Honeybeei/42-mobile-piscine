@@ -8,7 +8,6 @@ String calculationLogic(String expression) {
   final List<String> tokens = _tokenize(expression);
   _checkTokens(tokens);
   _handlePlusMinusOperator(tokens);
-  _printTokens(tokens);
   final double result = _calculate(tokens);
 
   // Handle potential overflow for integer results
@@ -51,6 +50,10 @@ void _checkTokens(List<String> tokens) {
   for (int i = 0; i < tokens.length; i++) {
     if (!_isOperator(tokens[i])) {
       if (tokens[i].contains(".")) {
+        // check if the number starts with a dot
+        if (tokens[i].startsWith(".")) {
+          throw ErrorHandling.invalidNumber(tokens[i]);
+        }
         // check if the number ends with a dot
         if (tokens[i].endsWith(".")) {
           throw ErrorHandling.invalidNumber(tokens[i]);
@@ -67,8 +70,10 @@ void _checkTokens(List<String> tokens) {
       } catch (e) {
         throw ErrorHandling.invalidNumber(tokens[i]);
       }
-      // check if there is a zero at the start of a number
-      if (tokens[i].startsWith("0") && tokens[i].length > 1) {
+      // check if there is a zero at the start of a number that is not a decimal
+      if (tokens[i].startsWith("0") &&
+          tokens[i].length > 1 &&
+          tokens[i][1] != ".") {
         throw ErrorHandling.invalidNumber(tokens[i]);
       }
     }
@@ -159,9 +164,11 @@ double _calculate(List<String> tokens) {
     } else {
       nextToken = "";
     }
+    // calculate multiplication and division
     if (currentToken == "×") {
+      // handle multiplication
       final double n1 = numbers.removeLast();
-      final double n2 = double.parse(tokens[i + 1]);
+      final double n2 = double.parse(nextToken);
       i++;
       final double result = n1 * n2;
       // check for overflow
@@ -171,8 +178,9 @@ double _calculate(List<String> tokens) {
       }
       numbers.add(result);
     } else if (tokens[i] == "÷") {
+      // handle division
       final double n1 = numbers.removeLast();
-      final double n2 = double.parse(tokens[i + 1]);
+      final double n2 = double.parse(nextToken);
       i++;
       if (n2 == 0) {
         throw ErrorHandling.invalidCalculation(
@@ -186,7 +194,8 @@ double _calculate(List<String> tokens) {
       }
       numbers.add(result);
     } else {
-      final double result = double.parse(tokens[i]);
+      // add number to list
+      final double result = double.parse(currentToken);
       if (_isOverflowed(result)) {
         throw ErrorHandling.invalidCalculation(
             extraMessage: "number $currentToken caused overflow");
